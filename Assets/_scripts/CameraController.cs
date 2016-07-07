@@ -38,21 +38,27 @@ public class CameraController : MonoBehaviour
         {
             if (!lockRotation.z && Input.GetKey(zKey))
             {
-                roll += (-(mouseX) * rotationSpeed.z*speedMod);
-                
+                roll += lockRotation.z ? 0
+                    : ((-(mouseX) * rotationSpeed.z * speedMod));
+
             }
             else
             {
+                /*The next two statements convert out regular XY mouse 
+                 * cordinates to a a rotated axis that will allow proper 
+                 * rotation.*/
                 float x = mouseX * Mathf.Cos(roll) - mouseY * Mathf.Sin(roll);
                 float y = mouseX * Mathf.Sin(roll) + mouseY * Mathf.Cos(roll);
-                theta += lockRotation.x ? 0 : ((y) * rotationSpeed.x * speedMod);
-                phi += lockRotation.y ? 0 : ((x) * rotationSpeed.y * speedMod);
+                theta += lockRotation.x ? 0 
+                    : ((y) * rotationSpeed.x * speedMod);
+                phi += lockRotation.y ? 0 
+                    : ((x) * rotationSpeed.y * speedMod);
             }
         }
-
+        /*zoom the camera outward.*/
         rad += (invertDistanceScroll ? -1 : 1)
             * Input.mouseScrollDelta.y;
-
+        /*Keep phi from getting out of control with large numbers.*/
         while (phi > 2 * Mathf.PI)
         {
             phi -= 2 * Mathf.PI;
@@ -61,23 +67,19 @@ public class CameraController : MonoBehaviour
         {
             phi += 2 * Mathf.PI;
         }
-
+        /*Calculate the x y and z spherical cordinates so that there is a 
+         * smooth rotation*/
         float localZ = rad * Mathf.Sin(theta) * Mathf.Cos(phi);
         float localX = rad * Mathf.Sin(theta) * Mathf.Sin(phi);
         float localY = rad * Mathf.Cos(theta);
-
-        
-
-        Vector3 newPosition = new Vector3(localX, localY, localZ);
-        newPosition += target.transform.position;
-        Vector3 difference = newPosition - transform.position;
-        origin += difference;
-        
-        transform.position = newPosition;
+        /*Set the camera to have to correct position.*/
+        transform.position = new Vector3(localX, localY, localZ);
+        transform.position += target.transform.position;
 
         if (lookAtTarget)
         {
             transform.LookAt(target.transform);
+            /*Do a barrel roll.*/
             transform.Rotate(0, 0, roll * Mathf.Rad2Deg);
         }
     }
