@@ -1,36 +1,30 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[System.Serializable]
-public class Bool3
-{
-    public bool x, y, z;
-}
-
 public class CameraController : MonoBehaviour
 {
 
     public CameraTarget target;
-    public InputProcessor inputProc;
     public float defaultDistance;
     public Vector3 defaultRotation;
     public Bool3 lockRotation;
     public Bool3 lockPosition;
-    public bool lookAtTarget = true;
     public bool invertDistanceScroll = true;
-    public float rotationSpeed = 10;
+    public bool lookAtTarget = true;
+    public Vector3 rotationSpeed = new Vector3(10, 10, 10);
     public KeyCode zKey = KeyCode.LeftControl;
 
-    private float distanceToTarget;
-    private float xRot = 1f;
-    private float yRot = 1f;
-    private float roll = 0.0f;
+    private float rad;
+    private float roll = 0;
+    private float theta = 1;
+    private float phi = 10;
+    private float speedMod = 0.1f;
+    private Vector3 origin;
 
     void Start()
     {
-        distanceToTarget = defaultDistance;
-        transform.position = target.transform.position;
-        transform.Translate(0, 0, -10);
+        rad = defaultDistance;
+        origin = new Vector3(0, 0, 0);
         Debug.Log("Target is at: " + target.transform.position.ToString());
     }
 
@@ -42,33 +36,49 @@ public class CameraController : MonoBehaviour
 
         if (Input.GetMouseButton(0))
         {
-            if (Input.GetKey(zKey))
+            if (!lockRotation.z && Input.GetKey(zKey))
             {
-                roll += lockRotation.z ? 0 
-                    : (-(mouseX/10) * rotationSpeed * Time.deltaTime);
+                roll += (-(mouseX) * rotationSpeed.z*speedMod);
+                
             }
             else
             {
-                xRot += lockRotation.x ? 1 : ((mouseX / 100) * rotationSpeed
-                    * Time.deltaTime);
-                yRot += lockRotation.y ? 1 : ((mouseY / 100) * rotationSpeed
-                    * Time.deltaTime);
+                float x = mouseX * Mathf.Cos(roll) - mouseY * Mathf.Sin(roll);
+                float y = mouseX * Mathf.Sin(roll) + mouseY * Mathf.Cos(roll);
+                theta += lockRotation.x ? 0 : ((y) * rotationSpeed.x * speedMod);
+                phi += lockRotation.y ? 0 : ((x) * rotationSpeed.y * speedMod);
             }
         }
 
-        distanceToTarget += (invertDistanceScroll ? -1 : 1)
+        rad += (invertDistanceScroll ? -1 : 1)
             * Input.mouseScrollDelta.y;
 
-        float x = distanceToTarget * Mathf.Sin(xRot) * Mathf.Sin(yRot);
-        float z = distanceToTarget * Mathf.Cos(xRot) * Mathf.Sin(yRot);
-        float y = distanceToTarget * Mathf.Cos(yRot);
-        transform.position = new Vector3(x, y, z);
-        transform.position += target.transform.position;
+        while (phi > 2 * Mathf.PI)
+        {
+            phi -= 2 * Mathf.PI;
+        }
+        while (phi < 0)
+        {
+            phi += 2 * Mathf.PI;
+        }
+
+        float localZ = rad * Mathf.Sin(theta) * Mathf.Cos(phi);
+        float localX = rad * Mathf.Sin(theta) * Mathf.Sin(phi);
+        float localY = rad * Mathf.Cos(theta);
+
+        
+
+        Vector3 newPosition = new Vector3(localX, localY, localZ);
+        newPosition += target.transform.position;
+        Vector3 difference = newPosition - transform.position;
+        origin += difference;
+        
+        transform.position = newPosition;
 
         if (lookAtTarget)
         {
             transform.LookAt(target.transform);
-            transform.Rotate(0, 0, roll);
+            transform.Rotate(0, 0, roll * Mathf.Rad2Deg);
         }
     }
 }

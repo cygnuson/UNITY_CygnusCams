@@ -1,15 +1,27 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class CameraTarget : MonoBehaviour {
+[System.Serializable]
+public class Bool3
+{
+    public bool x, y, z;
+}
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+public class CameraTarget : MonoBehaviour
+{
+   
+
+    void Start()
+    {
+
+    }
+
+    void FixedUpdate()
+    {
+        
+    }
+
+
+
+
 }
