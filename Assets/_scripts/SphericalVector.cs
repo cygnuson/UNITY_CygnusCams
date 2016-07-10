@@ -1,130 +1,166 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
+using System.Collections.Generic;
 
-/*
- * TODO
- * Factories
- * ctor
- * cylindrical convert.
- */
+
 
 
 /// <summary>
-/// Create a spherical vector for use in the Unity coordinate system.  The 
-/// class assumes that the z-axis points forward and backward, the x-axis 
-/// points left and right, and the y-axis points upward and downward.  The 
-/// Spherical Vector can be explicitly casted to a Vector3 with the x,y,z 
-/// coordinates set properly to be used directly in unity.  See wikipedia
-/// for more info on spherical coordinates.
+/// The SphericalVector is in RADIANS!
+/// 
+/// Create a spherical, cartesian, or cylindrical vector for use in the Unity 
+/// coordinate system.  The class assumes that the z-axis points forward and 
+/// backward, the rightAxis-axis  points left and right, and the y-axis points 
+/// upward and downward.  The  Spherical Vector can be explicitly casted to a 
+/// Vector3 with the coordinates set properly to be used directly in unity. 
+/// See wikipediafor more info on spherical coordinates.
 /// </summary>
 [System.Serializable]
 public class SphericalVector
 {
 
     /// <summary>
-    /// The type of coordinate system to work with.
+    /// The radius away from the origin.
     /// </summary>
-    public enum Type
+    public Component radius = new Component();
+    /// <summary>
+    /// The azithmal angle. The angle that rotates around the right axis in 
+    /// RADIANS!
+    /// </summary>
+    public Component theta = new Component();
+    /// <summary>
+    /// The polar angle. The angle that rotates about the up axis in RADIANS!
+    /// </summary>
+    public Component phi = new Component();
+
+    /// <summary>
+    /// Empty Constructor
+    /// </summary>
+    public SphericalVector()
     {
-
-        /// <summary>
-        /// The XYZ coordinate system.
-        /// </summary>
-        Cartesian = 1,
-
-        /// <summary>
-        /// The spherical system using radius, zenith, azimuth.
-        /// </summary>
-        Spherical,
-
-        /// <summary>
-        /// Cylidrical system, using radius, zenith, elevation.
-        /// </summary>
-        Cylindrical
+        
     }
-    
-    /// <summary>
-    /// The radial coordinate (radius) of the value.
-    /// </summary>
-    float radial;
+
 
     /// <summary>
-    /// The zenith angle (theta) of the value.  This is the anfle on the z-axis
-    /// and the orthogonal projection plane intersecting the xy plane.
+    /// Create a spherical vector based on cartesian coordinates.
     /// </summary>
-    float zenith;
-
-    /// <summary>
-    /// The azimuth angle (phi) of the value.  This is the angle on the xy
-    /// plane.
-    /// </summary>
-    float azimuth;
-
-    /// <summary>
-    /// Construct a sperical vector from any of the three main coordinate 
-    /// systems.
-    /// </summary>
-    /// <param name="x_or_radius">
-    /// The x value in cartesian system, or the radius in the spherical or 
-    /// cylindrical.
-    /// </param>
-    /// <param name="y_or_zenith">
-    /// The y value in the cartesian system, or the zenith (theta) in the 
-    /// spherical system or cylindrical system.
-    /// </param>
-    /// <param name="z_or_azimuth_or_elevation">
-    /// The z value in the cartesian system, or the azimuth in the spherical 
-    /// system, or the elevation in the cylindrical system.
-    /// </param>
-    /// <param name="loadSystem">
-    /// The system to use to load the data. Use SphericalVector.Type.* to 
-    /// choose.
-    /// </param>
-    public SphericalVector(
-        float x_or_radius, 
-        float y_or_zenith, 
-        float z_or_azimuth_or_elevation, 
-        SphericalVector.Type loadSystem)
+    /// <param name="rightAxis"></param>
+    /// <param name="upAxis"></param>
+    /// <param name="forwardAxis"></param>
+    private SphericalVector(float rightAxis, float upAxis, float forwardAxis)
     {
-        switch (loadSystem)
-        {
-            case Type.Cartesian:
-                break;
-            case Type.Spherical:
-
-                break;
-            case Type.Cylindrical:
-
-                break;
-        }
+        float ra2 = Mathf.Pow(rightAxis, 2);
+        float ua2 = Mathf.Pow(upAxis, 2);
+        float fa2 = Mathf.Pow(forwardAxis, 2);
+        radius.ForceSet(Mathf.Sqrt(ra2 + ua2 + fa2));
+        theta.ForceSet(Mathf.Acos(upAxis / radius.value));
+        phi.ForceSet(Mathf.Atan2(rightAxis, forwardAxis));
     }
 
     /// <summary>
-    /// Convert a spherical vector to a vector3. Its x,y,z coordinates will be
+    /// Create a spherical vector based on cartesian coordinates.
+    /// </summary>
+    /// <param name="rightAxis"></param>
+    /// <param name="upAxis"></param>
+    /// <param name="forwardAxis"></param>
+    static public SphericalVector CreateFromCartesian(
+       float rightAxis, float upAxis, float forwardAxis)
+    {
+        return new SphericalVector(rightAxis, upAxis, forwardAxis);
+    }
+
+    /// <summary>
+    /// Create a spherical vector from a cartesian vector.
+    /// </summary>
+    /// <param name="vec">The vector3</param>
+    /// <returns></returns>
+    static public SphericalVector CreateFromCartesian(Vector3 vec)
+    {
+        return CreateFromCartesian(vec.x, vec.y, vec.z);
+    }
+
+    /// <summary>
+    /// Create a Sperical component from spherical coordinates.
+    /// </summary>
+    /// <param name="radius">
+    /// The distance away from the center point.
+    /// </param>
+    /// <param name="theta">
+    /// The zenith angle (theta) of the value.  The angle that comes down off
+    /// upward axis (Y in unity) and touches the point.  The angle must be 
+    /// satisfy the following: 0 less than theta less than pi. If the angle 
+    /// reaches pi or zero, distortion of the camera view ill occure.
+    /// </param>
+    /// <param name="phi">
+    /// The azimuth angle (phi) of the value. The angle of the horizontal 
+    /// plane.  In unity, its the ZX plane.  The values range from 0 -> 2pi and
+    /// repeat.
+    /// </param>
+    /// <returns>
+    /// A Spherical Vector.
+    /// </returns>
+    static public SphericalVector Create(
+         float radius, float phi, float theta)
+    {
+        SphericalVector sv = new SphericalVector();
+        sv.radius.ForceSet(radius);
+        sv.phi.ForceSet(phi);
+        sv.theta.ForceSet(theta);
+        return sv;
+    }
+
+    /// <summary>
+    /// Convert a spherical vector to a vector3. Its rightAxis,y,z coordinates will be
     /// properly calculated so that they can be used with the cartesian system.
     /// </summary>
     /// <param name="sv">The spherical vector to convert.</param>
     /// <returns>A Vector3 with properly calculated values.</returns>
-    static public Vector3 ToVector3(SphericalVector sv)
+    static public Vector3 ToCartesian(SphericalVector sv)
     {
-        float z = sv.radial * Mathf.Sin(sv.zenith)
-           * Mathf.Cos(sv.azimuth);
-        float x = sv.radial * Mathf.Sin(sv.zenith)
-            * Mathf.Sin(sv.azimuth);
-        float y = sv.radial * Mathf.Cos(sv.zenith);
-        return new Vector3(x, y, z);
+        /*It may look weird, but they coordinates are moved around to work 
+         with unitys axis of y(up) rightAxis(right) z(forward)*/
+        /*The forward axis*/
+        float forwardAxis = sv.radius.value * Mathf.Sin(sv.theta.value)
+           * Mathf.Cos(sv.phi.value);
+        /*The right axis*/
+        float rightAxis = sv.radius.value * Mathf.Sin(sv.theta.value)
+            * Mathf.Sin(sv.phi.value);
+        /*The up axis.*/
+        float upAxis = sv.radius.value * Mathf.Cos(sv.theta.value);
+        return new Vector3(rightAxis, upAxis, forwardAxis);
     }
 
     /// <summary>
-    /// Explicit conversion to a Vector3.
+    /// Convert this to cylindrical cordinates.
     /// </summary>
-    /// <param name="sv">
-    /// The spherical coordinate to be converted explicitly.
-    /// </param>
-    static public explicit operator Vector3(SphericalVector sv)
+    /// <param name="sv"></param>
+    /// <returns></returns>
+    static public CylindricalVector ToCylindrical(SphericalVector sv)
     {
-        return ToVector3(sv);
+        Vector3 cart = SphericalVector.ToCartesian(sv);
+        return CylindricalVector.CreateFromCartesian(cart.x, cart.y, cart.z);
+    }
+
+    /// <summary>
+    /// Create a spherical vector rom a cylindrical one.
+    /// </summary>
+    /// <param name="cv"></param>
+    /// <returns></returns>
+    static public SphericalVector CreateFromCylindrical(CylindricalVector cv)
+    {
+        var cyl = CylindricalVector.ToCartesian(cv);
+        return SphericalVector.CreateFromCartesian(cyl);
+    }
+
+    /// <summary>
+    /// Get a string reprisentation of this vector.
+    /// </summary>
+    /// <returns>a string reprisentation of this vector.</returns>
+    override
+    public string ToString()
+    {
+        return "[r=" + radius + ",phi=" + phi + ",theta=" + theta + "]";
     }
 
 }

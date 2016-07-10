@@ -10,39 +10,6 @@ public class Bool3
     public bool z;
 }
 
-[System.Serializable]
-public class Control
-{
-    [Tooltip("True to check a mouse button instead of a key.")]
-    public bool useMouse;
-    [Tooltip("The button to check if `Use Mouse` is true.")]
-    public int button;
-    [Tooltip("The key to check if `Use Mouse` is not true.")]
-    public KeyCode key;
-
-    /// <summary>
-    /// Determine if the control is activated by its button or key being 
-    /// pressed.  If `useMouse` is set to true, `button` will be checked as a
-    /// mouse button. Otherwise `key` will be check as a keyboard key.
-    /// </summary>
-    /// <returns>
-    /// True if the key or button is pressed. False otherwise.
-    /// </returns>
-    public bool IsPressed()
-    {
-        return useMouse ?
-            Input.GetMouseButton(button)
-            : Input.GetKey(key);
-    }
-}
-
-[System.Serializable]
-public class MouseLockConfig
-{
-    [Tooltip("True to auto lock the cursor when bound by the camera.")]
-    public bool doLock = false;
-}
-
 
 [System.Serializable]
 public class CameraConfig {
@@ -66,7 +33,5 @@ public class CameraConfig {
     public Control zAxisControl;
     [Tooltip("The button that will engage the rotation of the camera.")]
     public Control rotateCameraControl;
-    [Tooltip("True to have the mouse auto lock to this target when bound to.")]
-    public MouseLockConfig mouseAutoLockConfig;
 
 }

@@ -5,9 +5,19 @@ using UnityEngine.UI;
 /*
  * TODO
  * 
- * test the spherical vector.
  * shorted the fixedupdate by making more functions.
+ * options to lerp the rotation and movement.
+ * Abstract Camera holds the target location
+ * Abstract Camera holds the rotation.
+ * Only key presses and setups happend in CameraController, 
+ *      everything else is in the camera object.
+ * Lock things properly.
  * 
+ * filters that will trigger a delegate when recievign a certian value.
+ * 
+ * Free Roam stuff should go in a special FreeRoamCamera that contains a spherical/cyl/cart camera.
+ * 
+ * finish cylindrical cordinates for the new Component system.
  * 
  * */
 
@@ -32,8 +42,6 @@ public class FreeRoamConfig
     public Control down;
     [Tooltip("The speed to move when free roaming.")]
     public float freeRoamSpeed = 10;
-    [Tooltip("The mouse setting for when in free roam mode.")]
-    public MouseLockConfig mouse;
 }
 
 /// <summary>
@@ -51,17 +59,14 @@ public class CameraController : MonoBehaviour
         + "enabled. That will happen when the camera is unbound from its"
         + "target.")]
     public FreeRoamConfig freeRoamConfig;
-    
+
     /*The config will referece the config in the target.*/
     private CameraConfig config;
     /*Keep track of wether the mouse is locked or not.*/
     private bool mouseLocked;
 
-    private float rad;
-    private float roll = 0;
-    private float theta = 1;
-    private float phi = 10;
-    private float speedMod = 0.1f;
+    private SphericalCamera mainCamera;
+
     private Vector3 freeRoamTarget;
     private Text onScreenDebugText;
 
@@ -124,14 +129,14 @@ public class CameraController : MonoBehaviour
         {
             freeRoamTarget = target.transform.position;
             config.bindToTarget = false;
-            if (!freeRoamConfig.mouse.doLock)
+            /*if (!freeRoamConfig.mouse.doLock)
             {
                 UnlockMouse();
             }
             else
             {
                 LockMouse();
-            }
+            }*/
         }
         else
         {
@@ -147,14 +152,14 @@ public class CameraController : MonoBehaviour
         if (!config.bindToTarget)
         {
             config.bindToTarget = true;
-            if (config.mouseAutoLockConfig.doLock)
+            /*if (config.mouseAutoLockConfig.doLock)
             {
                 LockMouse();
             }
             else
             {
                 UnlockMouse();
-            }
+            }*/
         }
         else
         {
@@ -165,20 +170,42 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         config = target.config;
-        if (config.mouseAutoLockConfig.doLock)
-        {
-            LockMouse();
-        }
-        else
-        {
-            UnlockMouse();
-        }
+        /* if (config.mouseAutoLockConfig.doLock)
+         {
+             LockMouse();
+         }
+         else
+         {
+             UnlockMouse();
+         }*/
 
         if (config.onScreenDebugText != null)
         {
             onScreenDebugText = config.onScreenDebugText;
         }
-        rad = config.defaultDistance;
+        mainCamera = new SphericalCamera(
+            config.defaultDistance, 0, 10, 10, 1, 0);
+
+        mainCamera.sphericalVector.theta.AddFilter(
+            new Filters.ClampFilter(0.001f, Mathf.PI - 0.001f),
+            Filters.Type.Get);
+
+        mainCamera.sphericalVector.phi.AddFilter(
+            new Filters.RepeatFilter(2 * Mathf.PI), Filters.Type.Get);
+
+        mainCamera.roll.AddFilter(
+            new Filters.RepeatFilter(2 * Mathf.PI), Filters.Type.Get);
+        mainCamera.roll.AddFilter(
+            new Filters.InversionFilter(), Filters.Type.Set);
+
+        mainCamera.sphericalVector.radius.AddFilter(
+            new Filters.LowerBoundFilter(2), Filters.Type.Get);
+
+        if (config.invertDistanceScroll)
+        {
+            mainCamera.sphericalVector.radius.AddFilter(
+                new Filters.InversionFilter(), Filters.Type.Set);
+        }
         Debug.Log("Target is at: " + target.transform.position.ToString());
     }
 
@@ -251,68 +278,38 @@ public class CameraController : MonoBehaviour
             bool doRoll = config.zAxisControl.IsPressed();
             if (!config.lockRotation.z && doRoll)
             {
-                roll += config.lockRotation.z ? 0
-                    : ((-(mouseX) * config.rotationSpeed.z * speedMod));
-                /*Make sure the roll value does not go to high by cycling it.*/
-                while (roll > 2 * Mathf.PI)
-                {
-                    roll -= 2 * Mathf.PI;
-                }
-                while (roll < 0)
-                {
-                    roll += 2 * Mathf.PI;
-                }
+                mainCamera.Spin(0,0,config.lockRotation.z ? 0: mouseX);
             }
             else
             {
-                /*The next two statements convert out regular XY mouse 
-                 * cordinates to a a rotated axis that will allow proper 
-                 * rotation.*/
-                float x = mouseX * Mathf.Cos(roll)
-                    - mouseY * Mathf.Sin(roll);
-                float y = mouseX * Mathf.Sin(roll)
-                    + mouseY * Mathf.Cos(roll);
-                theta += config.lockRotation.x ? 0
-                    : ((y) * config.rotationSpeed.x * speedMod);
-                phi += config.lockRotation.y ? 0
-                    : ((x) * config.rotationSpeed.y * speedMod);
-                /*keep theta between 0 and pi.*/
-                theta = Mathf.Clamp(theta, 0.001f, Mathf.PI - 0.001f);
+                /*the adjusted vector is to translate the bare xy click to a
+                 tilted vector so that the rotation is properly handled due
+                 to the roll applied to the camera.*/
+                var adjusted = TiltVector.CreateTiltedVector(
+                    new Vector2(mouseX, mouseY),mainCamera.roll.value);
+                mainCamera.Spin(config.lockRotation.y ? 0 : adjusted.x,
+                    config.lockRotation.x ? 0 : adjusted.y, 0);
             }
         }
         /*zoom the camera outward.*/
-        rad += (config.invertDistanceScroll ? -1 : 1)
-            * Input.mouseScrollDelta.y;
-        /*Keep phi from getting out of control with large numbers.*/
-        while (phi > 2 * Mathf.PI)
-        {
-            phi -= 2 * Mathf.PI;
-        }
-        while (phi < 0)
-        {
-            phi += 2 * Mathf.PI;
-        }
-        /*Calculate the x y and z spherical cordinates so that there is a 
-         * smooth rotation*/
-        float localZ = rad * Mathf.Sin(theta) * Mathf.Cos(phi);
-        float localX = rad * Mathf.Sin(theta) * Mathf.Sin(phi);
-        float localY = rad * Mathf.Cos(theta);
+        if (Input.mouseScrollDelta.y != 0)
+            mainCamera.sphericalVector.radius += Input.mouseScrollDelta.y;
         /*Set the camera to have to correct position.*/
-        transform.position = new Vector3(localX, localY, localZ);
+        transform.position = mainCamera.GetLocation();
         transform.position += targetPosition;
 
         transform.LookAt(targetPosition);
         /*Do a barrel roll.*/
-        transform.Rotate(0, 0, roll * Mathf.Rad2Deg);
+        transform.Rotate(0, 0, mainCamera.roll.value * Mathf.Rad2Deg);
         if (onScreenDebugText != null)
         {
             if (config.onScreenDebugRotation)
             {
                 /*Show some debugging information.*/
-                onScreenDebugText.text = "theta: " + theta
-                               + "\nphi: " + phi
-                               + "\nroll: " + roll
-                               + "\nDistance: " + rad
+                onScreenDebugText.text = "theta: " + mainCamera.sphericalVector.theta.value
+                               + "\nphi: " + mainCamera.sphericalVector.phi.value
+                               + "\nroll: " + mainCamera.roll.value
+                               + "\nDistance: " + mainCamera.sphericalVector.radius.value
                                + "\nX-Rotation: "
                                + transform.rotation.eulerAngles.x
                                + "\nY-Rotation: "
