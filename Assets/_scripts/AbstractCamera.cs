@@ -1,10 +1,54 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
 
+public struct DebugInfo
+{
+    public string name;
+    public string info;
+}
 
 public abstract class AbstractCamera
 {
+    private bool _enabled = false;
+    /// <summary>
+    /// If enabled is false, then this camera will not update or even do 
+    /// anything.
+    /// </summary>
+    public bool enabled
+    {
+        get
+        {
+            return _enabled;
+        }
+        set
+        {
+            //perform disable/enable stuff
+            _enabled = value;
+        }
+    }
+    private bool _doDebug = false;
+    /// <summary>
+    /// If enabled is false, then this camera will not update or even do 
+    /// anything.
+    /// </summary>
+    public bool doDebug
+    {
+        get
+        {
+            return _doDebug;
+        }
+        set
+        {
+            //perform disable/enable debug stuff
+            _doDebug = value;
+        }
+    }
+    /// <summary>
+    /// The text element that will show debug information.
+    /// </summary>
+    public Text debugText;
     /// <summary>
     /// The amount of roll on this camera in radians. The angle that rotates
     /// around the forward axis.
@@ -47,7 +91,14 @@ public abstract class AbstractCamera
     /// <param name="camera">The GameObject that will be updated (the camera)
     /// </param>
     abstract public void FixedUpdate(GameObject camera);
-
+    /// <summary>
+    /// Process internal debug information. With optional additional text.
+    /// </summary>
+    /// <param name="additionalText">Additional information to show.</param>
+    /// <param name="newlines">True for each additionalText item to have a 
+    /// new line.</param>
+    abstract public void ProcessDebugScreen(
+        bool newlines, params DebugInfo[] additionalText);
     /// <summary>
     /// Create the base part of the class.
     /// </summary>

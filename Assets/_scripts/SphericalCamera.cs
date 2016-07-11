@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SphericalCamera : AbstractCamera
 {
@@ -72,7 +73,52 @@ public class SphericalCamera : AbstractCamera
     {
         return SphericalVector.ToCartesian(sphericalVector);
     }
-
+    /// <summary>
+    /// Setup the debug screen to use with this camera.
+    /// </summary>
+    /// <param name="screen"></param>
+    public void SetDebugScreen(Text screen)
+    {
+        if (screen == null)
+        {
+            Debug.Log("Debug screen set as null.");
+            return;
+        }
+        debugText = screen;
+    }
+    /// <summary>
+    /// Process internal debug information. With optional additional text.
+    /// </summary>
+    /// <param name="additionalText">Additional information to show.</param>
+    public override void ProcessDebugScreen(
+        bool newlines, params DebugInfo[] additionalText)
+    {
+        if (!doDebug)
+        {
+            return;
+        }
+        if(debugText == null)
+        {
+            Debug.Log("Debug screen is null.");
+            return;
+        }
+        
+        string text = "theta: " + sphericalVector.theta.value+ "\nphi: " 
+            + sphericalVector.phi.value+ "\nroll: " 
+            + roll.value+ "\nDistance: " 
+            + sphericalVector.radius.value;
+        int amt = additionalText.Length;
+        for(int i = 0; i < amt; ++i)
+        {
+            if(newlines)
+            {
+                text += "\n";
+            }
+            text += additionalText[i].name;
+            text += ": " + additionalText[i].info;
+        }
+        debugText.text = text;
+    }
     /// <summary>
     /// Do all the zoom key/axis checks.
     /// </summary>
@@ -143,10 +189,17 @@ public class SphericalCamera : AbstractCamera
     /// </param>
     public override void FixedUpdate(GameObject camera)
     {
+        if (!enabled)
+        {
+            return;
+        }
+
         //see if there needs to be some zooming.
         ProcessZoom();
         //Change any angles that need to be changed.
         ProcessAngles();
 
     }
+
+    
 }

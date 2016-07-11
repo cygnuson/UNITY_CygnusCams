@@ -10,14 +10,20 @@ using UnityEngine.UI;
  * Abstract Camera holds the target location
  * Only key presses and setups happend in CameraController, 
  *      everything else is in the camera object.
- * Lock things properly.
- * controls should be part of the target.
  * filters that will trigger a delegate when recievign a certian value.
- * 
+ * mouse locking.
  * Free Roam stuff should go in a special FreeRoamCamera that contains a spherical/cyl/cart camera.
  * 
  * finish cylindrical cordinates for the new Component system.
  * 
+ * custom screen Text panel set for debugging stuff.
+ * 
+ * use key combos instead of single keys.  Change the Control. If it has only one key
+ *      or button set to the combo, then it will have no change in ehavior compared to right now.
+ *      make the roll use a combo with first click, then right click. then zoom
+ *      to work with first click then scroll.
+ *      
+ *      
  * */
 
 
@@ -45,7 +51,6 @@ public class CameraController : MonoBehaviour
     private SphericalCamera mainCamera;
 
     private Vector3 freeRoamTarget;
-    private Text onScreenDebugText;
 
     /// <summary>
     /// Toggel the lock state of the mouse. If its locked, it will become 
@@ -155,11 +160,6 @@ public class CameraController : MonoBehaviour
          {
              UnlockMouse();
          }*/
-
-        if (config.onScreenDebugText != null)
-        {
-            onScreenDebugText = config.onScreenDebugText;
-        }
         mainCamera = new SphericalCamera(
             15, 0, 10, 10, 1, 0);
 
@@ -196,6 +196,10 @@ public class CameraController : MonoBehaviour
             EnableAxis(CameraControl.AxisType.RollCamera, "Mouse X");
         mainCamera.
             EnableAxis(CameraControl.AxisType.CameraUpDown, "Mouse Y");
+
+        mainCamera.SetDebugScreen(config.onScreenDebugText);
+        mainCamera.doDebug = true;
+        mainCamera.enabled = true;
         //mainCamera.EnableControl(CameraControl.KeyType.ZoomOut, KeyCode.PageDown);
         //mainCamera.EnableControl(CameraControl.KeyType.ZoomIn, KeyCode.PageUp);
 
@@ -261,8 +265,8 @@ public class CameraController : MonoBehaviour
             }*/
         }
 
-        
-        
+
+
         /*Set the camera to have to correct position.*/
         transform.position = mainCamera.GetLocation();
         transform.position += targetPosition;
@@ -270,23 +274,18 @@ public class CameraController : MonoBehaviour
         transform.LookAt(targetPosition);
         /*Do a barrel roll.*/
         transform.Rotate(0, 0, mainCamera.roll.value * Mathf.Rad2Deg);
-        if (onScreenDebugText != null)
-        {
-            if (config.onScreenDebugRotation)
-            {
-                /*Show some debugging information.*/
-                onScreenDebugText.text = "theta: " + mainCamera.sphericalVector.theta.value
-                               + "\nphi: " + mainCamera.sphericalVector.phi.value
-                               + "\nroll: " + mainCamera.roll.value
-                               + "\nDistance: " + mainCamera.sphericalVector.radius.value
-                               + "\nX-Rotation: "
-                               + transform.rotation.eulerAngles.x
-                               + "\nY-Rotation: "
-                               + transform.rotation.eulerAngles.y
-                               + "\nZ-Rotation: "
-                               + transform.rotation.eulerAngles.z;
-            }
 
-        }
+        DebugInfo info1 = new DebugInfo(); ;
+        info1.name = "X-Rotation";
+        info1.info = transform.rotation.eulerAngles.x.ToString();
+        DebugInfo info2 = new DebugInfo(); ;
+        info2.name = "Y-Rotation";
+        info2.info = transform.rotation.eulerAngles.y.ToString();
+        DebugInfo info3 = new DebugInfo(); ;
+        info3.name = "Z-Rotation";
+        info3.info = transform.rotation.eulerAngles.z.ToString();
+
+        mainCamera.ProcessDebugScreen(true,info1, info2, info3);
+
     }
 }
