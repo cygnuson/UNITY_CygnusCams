@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Assets\_scripts\AbstractCamera.cs" />
     <Compile Include="Assets\_scripts\CameraConfig.cs" />
+    <Compile Include="Assets\_scripts\CameraControl.cs" />
     <Compile Include="Assets\_scripts\CameraController.cs" />
     <Compile Include="Assets\_scripts\CameraTarget.cs" />
     <Compile Include="Assets\_scripts\Component.cs" />

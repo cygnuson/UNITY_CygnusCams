@@ -8,6 +8,7 @@ public class CameraTarget : MonoBehaviour
 
     public CameraConfig config;
     
+
     void Start()
     {
         

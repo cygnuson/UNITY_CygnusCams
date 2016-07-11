@@ -4,7 +4,7 @@ using Filters;
 /// <summary>
 /// A value that holds filters that are applied to the it when set.  Filters
 /// are applied from first to last in order.  Filters added with 
-/// Filters.Type.Set will be applied to new values being put into the 
+/// Filters.Type.Set will be applied to new values being applied into the 
 /// Component.  Filters added with Filters.Type.Get will be applied as a whole
 /// each time the value is gotten.
 /// </summary>

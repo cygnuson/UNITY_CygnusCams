@@ -11,11 +11,13 @@ namespace Filters
     public enum Type
     {
         /// <summary>
-        /// Use change filters.
+        /// Use change filters.  Change filters are applied only to seperate
+        /// values just befor they are applied to the value of the Component.
         /// </summary>
         Set,
         /// <summary>
-        /// Use get filters.
+        /// Use get filters.  Get Filters are applied to the whole of the
+        /// value when its it gotten.
         /// </summary>
         Get,
     }

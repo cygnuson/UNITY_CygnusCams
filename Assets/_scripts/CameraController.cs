@@ -8,11 +8,10 @@ using UnityEngine.UI;
  * shorted the fixedupdate by making more functions.
  * options to lerp the rotation and movement.
  * Abstract Camera holds the target location
- * Abstract Camera holds the rotation.
  * Only key presses and setups happend in CameraController, 
  *      everything else is in the camera object.
  * Lock things properly.
- * 
+ * controls should be part of the target.
  * filters that will trigger a delegate when recievign a certian value.
  * 
  * Free Roam stuff should go in a special FreeRoamCamera that contains a spherical/cyl/cart camera.
@@ -21,28 +20,6 @@ using UnityEngine.UI;
  * 
  * */
 
-
-/// <summary>
-/// Configuration setting for a change to free roam mode.
-/// </summary>
-[System.Serializable]
-public class FreeRoamConfig
-{
-    [Tooltip("The button to move forward.")]
-    public Control forward;
-    [Tooltip("The button to move backward.")]
-    public Control backward;
-    [Tooltip("The button to move left.")]
-    public Control left;
-    [Tooltip("The button to move right.")]
-    public Control right;
-    [Tooltip("The button to move up.")]
-    public Control up;
-    [Tooltip("The button to move down.")]
-    public Control down;
-    [Tooltip("The speed to move when free roaming.")]
-    public float freeRoamSpeed = 10;
-}
 
 /// <summary>
 /// The CameraController is intended to be attached to a camera. It can be
@@ -58,7 +35,7 @@ public class CameraController : MonoBehaviour
     [Tooltip("The configureation for the camera when the free roam option is "
         + "enabled. That will happen when the camera is unbound from its"
         + "target.")]
-    public FreeRoamConfig freeRoamConfig;
+    //public CameraControl freeRoamConfig;
 
     /*The config will referece the config in the target.*/
     private CameraConfig config;
@@ -184,7 +161,7 @@ public class CameraController : MonoBehaviour
             onScreenDebugText = config.onScreenDebugText;
         }
         mainCamera = new SphericalCamera(
-            config.defaultDistance, 0, 10, 10, 1, 0);
+            15, 0, 10, 10, 1, 0);
 
         mainCamera.sphericalVector.theta.AddFilter(
             new Filters.ClampFilter(0.001f, Mathf.PI - 0.001f),
@@ -200,17 +177,35 @@ public class CameraController : MonoBehaviour
 
         mainCamera.sphericalVector.radius.AddFilter(
             new Filters.LowerBoundFilter(2), Filters.Type.Get);
+        mainCamera.sphericalVector.radius.AddFilter(
+            new Filters.MultiplyFilter(10), Filters.Type.Set);
 
         if (config.invertDistanceScroll)
         {
             mainCamera.sphericalVector.radius.AddFilter(
                 new Filters.InversionFilter(), Filters.Type.Set);
         }
+
+        mainCamera.EnableControl(CameraControl.KeyType.Rotate, 0);
+        mainCamera.EnableControl(CameraControl.KeyType.Roll, 1);
+        mainCamera.
+            EnableAxis(CameraControl.AxisType.ZoomAxis, "Mouse ScrollWheel");
+        mainCamera.
+            EnableAxis(CameraControl.AxisType.CameraLeftRight, "Mouse X");
+        mainCamera.
+            EnableAxis(CameraControl.AxisType.RollCamera, "Mouse X");
+        mainCamera.
+            EnableAxis(CameraControl.AxisType.CameraUpDown, "Mouse Y");
+        //mainCamera.EnableControl(CameraControl.KeyType.ZoomOut, KeyCode.PageDown);
+        //mainCamera.EnableControl(CameraControl.KeyType.ZoomIn, KeyCode.PageUp);
+
+
         Debug.Log("Target is at: " + target.transform.position.ToString());
     }
 
     void FixedUpdate()
     {
+        mainCamera.FixedUpdate(GetComponent<GameObject>());
         //////////////////////DEBUGGING KEYS///////////////////////////////////
         if (Input.GetKeyUp(KeyCode.Alpha1))
         {
@@ -236,64 +231,38 @@ public class CameraController : MonoBehaviour
         Vector3 targetPosition = config.bindToTarget ?
             target.transform.position
             : freeRoamTarget;
-        float mouseX = Input.GetAxis("Mouse X");
-        float mouseY = Input.GetAxis("Mouse Y");
         /*Free roam movement actions.*/
         if (!config.bindToTarget && Input.anyKey)
         {
-            float speed = freeRoamConfig.freeRoamSpeed;
-            var frKeys = freeRoamConfig;
-            if (frKeys.forward.IsPressed())
+            /*var frKeys = freeRoamConfig;
+            if (frKeys.IsPressed(CameraControl.KeyType.Forward))
             {
-                freeRoamTarget += transform.forward * delta * speed;
+                freeRoamTarget += transform.forward * delta;
             }
-            if (frKeys.backward.IsPressed())
+            if (frKeys.IsPressed(CameraControl.KeyType.Backward))
             {
-                freeRoamTarget -= transform.forward * delta * speed;
+                freeRoamTarget -= transform.forward * delta;
             }
-            if (frKeys.left.IsPressed())
+            if (frKeys.IsPressed(CameraControl.KeyType.Left))
             {
-                freeRoamTarget -= transform.right * delta * speed;
+                freeRoamTarget -= transform.right * delta;
             }
-            if (frKeys.right.IsPressed())
+            if (frKeys.IsPressed(CameraControl.KeyType.Right))
             {
-                freeRoamTarget += transform.right * delta * speed;
+                freeRoamTarget += transform.right * delta;
             }
-            if (frKeys.up.IsPressed())
+            if (frKeys.IsPressed(CameraControl.KeyType.Up))
             {
-                freeRoamTarget += transform.up * delta * speed;
+                freeRoamTarget += transform.up * delta;
             }
-            if (frKeys.down.IsPressed())
+            if (frKeys.IsPressed(CameraControl.KeyType.Down))
             {
-                freeRoamTarget -= transform.up * delta * speed;
-            }
+                freeRoamTarget -= transform.up * delta;
+            }*/
         }
-        /*choose wether a rotate should happen.*/
-        bool doRotate = config.rotateCameraControl.useMouse ?
-            Input.GetMouseButton(config.rotateCameraControl.button)
-            : Input.GetKey(config.rotateCameraControl.key);
 
-        if (doRotate)
-        {
-            bool doRoll = config.zAxisControl.IsPressed();
-            if (!config.lockRotation.z && doRoll)
-            {
-                mainCamera.Spin(0,0,config.lockRotation.z ? 0: mouseX);
-            }
-            else
-            {
-                /*the adjusted vector is to translate the bare xy click to a
-                 tilted vector so that the rotation is properly handled due
-                 to the roll applied to the camera.*/
-                var adjusted = TiltVector.CreateTiltedVector(
-                    new Vector2(mouseX, mouseY),mainCamera.roll.value);
-                mainCamera.Spin(config.lockRotation.y ? 0 : adjusted.x,
-                    config.lockRotation.x ? 0 : adjusted.y, 0);
-            }
-        }
-        /*zoom the camera outward.*/
-        if (Input.mouseScrollDelta.y != 0)
-            mainCamera.sphericalVector.radius += Input.mouseScrollDelta.y;
+        
+        
         /*Set the camera to have to correct position.*/
         transform.position = mainCamera.GetLocation();
         transform.position += targetPosition;
