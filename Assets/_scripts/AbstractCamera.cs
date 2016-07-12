@@ -3,14 +3,32 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System;
 
-public struct DebugInfo
-{
-    public string name;
-    public string info;
-}
-
 public abstract class AbstractCamera
 {
+    /// <summary>
+    /// The different kinds of filterable properties.
+    /// </summary>
+    public enum PropertyType
+    {
+        /// <summary>
+        /// The roll property. Spin on the foward axis.
+        /// </summary>
+        Roll,
+        /// <summary>
+        /// The Horizonal rotation property. Spin on the up axis.
+        /// </summary>
+        HorizontalRotation,
+        /// <summary>
+        /// The vertical rotation property. Spin on the right axis.
+        /// </summary>
+        VerticalRotation,
+        /// <summary>
+        /// The zoom property. Zoom in or out.
+        /// </summary>
+        Zoom,
+
+        Total,
+    }
     private bool _enabled = false;
     /// <summary>
     /// If enabled is false, then this camera will not update or even do 
@@ -46,14 +64,14 @@ public abstract class AbstractCamera
         }
     }
     /// <summary>
-    /// The text element that will show debug information.
+    /// The debugging information panel.
     /// </summary>
-    public Text debugText;
+    protected Text debugOutput;
     /// <summary>
     /// The amount of roll on this camera in radians. The angle that rotates
     /// around the forward axis.
     /// </summary>
-    public Component roll = new Component();
+    protected Component roll = new Component();
 
     /// <summary>
     /// Get the Vector3 from this camera trackign object.
@@ -63,7 +81,7 @@ public abstract class AbstractCamera
     /// <summary>
     /// The control settings for the camera.
     /// </summary>
-    public CameraControl controls = new CameraControl();
+    protected CameraControl controls = new CameraControl();
 
     /// <summary>
     /// Spin the camera around. If its on a track that it will stay on its
@@ -75,7 +93,7 @@ public abstract class AbstractCamera
     /// axis. Also known as PITCH</param>
     /// <param name="aboutForwardAxis_roll">The amount to spin about the 
     /// forward axis. Also known as ROLL</param>
-    abstract public void Spin(float aboutUpAxis_phi,
+    abstract protected void Spin(float aboutUpAxis_phi,
         float aboutRightAxis_theta, float aboutForwardAxis_roll);
     /// <summary>
     /// Zoom in or zoom out with a negative amount.  The radius filter will 
@@ -83,22 +101,21 @@ public abstract class AbstractCamera
     /// </summary>
     /// <param name="amt">The amount to zoom. amt tess than 0 for zoom out.
     /// </param>
-    abstract public void Zoom(float amt);
-
+    abstract protected void Zoom(float amt);
+    /// <summary>
+    /// Add a filter to the Zooming mechanism for the camera.
+    /// </summary>
+    /// <param name="filter">The filter to add.</param>
+    /// <param name="type">The type of filter Filters.Type.Set or .Get</param>
+    abstract public void AddFilter(Filters.MathFilter filter,
+        Filters.Type type, PropertyType propType);
     /// <summary>
     /// Update the camera. Change position, rotation, direction, etc.
     /// </summary>
     /// <param name="camera">The GameObject that will be updated (the camera)
     /// </param>
-    abstract public void FixedUpdate(GameObject camera);
-    /// <summary>
-    /// Process internal debug information. With optional additional text.
-    /// </summary>
-    /// <param name="additionalText">Additional information to show.</param>
-    /// <param name="newlines">True for each additionalText item to have a 
-    /// new line.</param>
-    abstract public void ProcessDebugScreen(
-        bool newlines, params DebugInfo[] additionalText);
+    /// <param name="target">The target to focus on.</param>
+    abstract public void FixedUpdate(Transform camera, Transform target);
     /// <summary>
     /// Create the base part of the class.
     /// </summary>
@@ -109,6 +126,60 @@ public abstract class AbstractCamera
     public AbstractCamera(float rollAmount)
     {
         roll.ForceSet(rollAmount);
+    }
+    /// <summary>
+    /// Change the position of the cmera to be focued on the target and in the
+    /// right position.
+    /// </summary>
+    /// <param name="target">The target to focus on.</param>
+    /// <param name="camera">The Unity camera to do the focusing.</param>
+    protected void ChangePosition(Transform camera, Transform target)
+    {
+        /*Set the camera to have to correct position.*/
+        camera.position = GetLocation();
+        camera.position += target.position;
+
+        camera.LookAt(target.position);
+        /*Do a barrel roll.*/
+        camera.Rotate(0, 0, roll.value * Mathf.Rad2Deg);
+
+    }
+    /// <summary>
+    /// Do all the zoom key/axis checks.
+    /// </summary>
+    protected void ProcessZoom()
+    {
+        /*zoom the camera outward.*/
+        if (AxisSet(CameraControl.AxisType.ZoomAxis))
+        {
+            float scrollAmount =
+                GetAxis(CameraControl.AxisType.ZoomAxis);
+            if (scrollAmount != 0)
+            {
+                Zoom(scrollAmount);
+            }
+        }
+        else if (Input.anyKey &&
+            KeySet(CameraControl.KeyType.ZoomIn, CameraControl.KeyType.ZoomOut))
+        {
+            float scrollAmount = 1;
+            if (IsPressed(CameraControl.KeyType.ZoomIn))
+            {
+                Zoom(-scrollAmount);
+            }
+            else if (IsPressed(CameraControl.KeyType.ZoomOut))
+            {
+                Zoom(scrollAmount);
+            }
+            else
+            {
+                //do nothing...for now.
+            }
+        }
+        else
+        {
+
+        }
     }
     /// <summary>
     /// Check if a non axis is pressed.

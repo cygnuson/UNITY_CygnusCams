@@ -19,7 +19,8 @@ public class Component
 
     private float _value;
     /// <summary>
-    /// Get the value after applied filters.  To set without filters, use Set.
+    /// Get the value after applied filters.  To set without filters, use 
+    /// ForceSet.
     /// Values set with this setter will have the entire result value affected
     /// by the set filters. If something turns out not to be correct, it may be
     /// that you should use the math operators (EG: Component + float)  So that

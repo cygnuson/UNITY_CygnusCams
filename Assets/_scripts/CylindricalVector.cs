@@ -12,15 +12,15 @@ public class CylindricalVector
     /// the distance away from the origin on the horizontal plane 
     /// (XZ for unity).
     /// </summary>
-    float rho { get; set; }
+    public Component rho = new Component();
     /// <summary>
     /// The rotation on the horizontal plane (XZ for unity).
     /// </summary>
-    float phi { get; set; }
+    public Component phi = new Component();
     /// <summary>
     /// The height above the horizontal plane.
     /// </summary>
-    float elevation { get; set; }
+    public Component elevation = new Component();
 
     /// <summary>
     /// Empty Constructor.
@@ -40,9 +40,9 @@ public class CylindricalVector
         /*The right axis.*/
         float ra2 = Mathf.Pow(rightAxis, 2);
         /*the Up axis.*/
-        elevation = upAxis;
-        rho = Mathf.Sqrt(fa2 + ra2);
-        phi = Mathf.Atan2(rightAxis, forwardAxis);
+        elevation.value = upAxis;
+        rho.value = Mathf.Sqrt(fa2 + ra2);
+        phi.value = Mathf.Atan2(rightAxis, forwardAxis);
     }
     
     /// <summary>
@@ -56,9 +56,9 @@ public class CylindricalVector
         float phi, float elevation)
     {
         CylindricalVector cv = new CylindricalVector();
-        cv.rho = radius;
-        cv.phi = phi;
-        cv.elevation = elevation;
+        cv.rho.value = radius;
+        cv.phi.value = phi;
+        cv.elevation.value = elevation;
         return cv;
     }
 
@@ -82,9 +82,9 @@ public class CylindricalVector
     /// <returns></returns>
     static public Vector3 ToCartesian(CylindricalVector cv)
     {
-        float forwardAxis = cv.rho * Mathf.Cos(cv.phi);
-        float rightAxis = cv.rho * Mathf.Sin(cv.phi);
-        float upAxis = cv.elevation;
+        float forwardAxis = cv.rho.value * Mathf.Cos(cv.phi.value);
+        float rightAxis = cv.rho.value * Mathf.Sin(cv.phi.value);
+        float upAxis = cv.elevation.value;
         return new Vector3(rightAxis,upAxis,forwardAxis);
     }
 
