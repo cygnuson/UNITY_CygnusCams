@@ -72,6 +72,13 @@ public abstract class AbstractCamera
     /// around the forward axis.
     /// </summary>
     protected Component roll = new Component();
+    public float getRoll
+    {
+        get
+        {
+            return roll.value;
+        }
+    }
 
     /// <summary>
     /// Get the Vector3 from this camera trackign object.

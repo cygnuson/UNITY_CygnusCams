@@ -11,6 +11,16 @@ public class Control
     public KeyCode key;
     [Tooltip("False to allow this control to be activated.")]
     public bool locked = false;
+    public Control() { }
+    public Control(KeyCode key)
+    {
+        this.key = key;
+    }
+    public Control(int button)
+    {
+        this.button = button;
+        useMouse = true;
+    }
     /// <summary>
     /// Determine if the control is activated by its button or key being 
     /// pressed.  If `useMouse` is set to true, `button` will be checked as a
