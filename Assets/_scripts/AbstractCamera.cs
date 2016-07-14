@@ -143,8 +143,13 @@ public abstract class AbstractCamera
     protected void ChangePosition(Transform camera, Transform target)
     {
         /*Set the camera to have to correct position.*/
-        camera.position = GetLocation();
-        camera.position += target.position;
+        Vector3 newPosition = new Vector3(0, 0, 0);
+        newPosition = GetLocation();
+        newPosition += target.position;
+
+        camera.position = newPosition;
+
+        
 
         camera.LookAt(target.position);
         /*Do a barrel roll.*/

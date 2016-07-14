@@ -196,6 +196,10 @@ public class CylindricalCamera : AbstractCamera
         {
             return;
         }
+
+
+        
+
         //see if there needs to be some zooming.
         ProcessZoom();
         //Change any angles that need to be changed.
@@ -204,5 +208,7 @@ public class CylindricalCamera : AbstractCamera
         ChangePosition(camera, target);
         //process the debug info.
         ProcessDebug(camera.rotation.eulerAngles);
+
+        
     }
 }

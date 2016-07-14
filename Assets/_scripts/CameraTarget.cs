@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEditor;
 using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -181,6 +180,8 @@ public class CameraTarget : MonoBehaviour
 
         camController.doDebug = true;
         camController.enabled = true;
+        
+
     }
 
     void Start()
@@ -236,6 +237,11 @@ public class CameraTarget : MonoBehaviour
         camController.FixedUpdate(unityCamera.transform, transform);
         _DEBUG_CHANGE_TO_CYLINDRICAL.Try();
         _DEBUG_CHANGE_TO_SPHERICAL.Try();
+
+        
+
+
+
     }
 
 
