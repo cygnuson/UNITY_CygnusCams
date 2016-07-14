@@ -86,8 +86,8 @@ public class CameraTarget : MonoBehaviour
     {
         Spherical,
         Cylindrical,
-        Fixed,
-        FreeRoam,
+        //Fixed,
+        //FreeRoam,
 
         Total,
     }
@@ -140,12 +140,12 @@ public class CameraTarget : MonoBehaviour
             case CameraType.Spherical:
                 SwitchToSpherical();
                 break;
-            case CameraType.Fixed:
+            /*case CameraType.Fixed:
 
                 break;
             case CameraType.FreeRoam:
 
-                break;
+                break;*/
             default:
                 Debug.Log("Invalid Camera type.");
                 break;
@@ -198,12 +198,12 @@ public class CameraTarget : MonoBehaviour
                     15, 0, SphericalVector.Create(50, 1, 1), 5, 1, 0,
                     debugScreen);
                 break;
-            case CameraType.Fixed:
+            /*case CameraType.Fixed:
 
                 break;
             case CameraType.FreeRoam:
 
-                break;
+                break;*/
             default:
                 Debug.Log("Invalid Camera type.");
                 break;
